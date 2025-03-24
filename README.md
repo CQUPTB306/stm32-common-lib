@@ -27,6 +27,7 @@
 强烈建议下载git并熟悉一些基础用法
 
 如果你已经下载了git也可以先复制仓库中的SparseCheckoutInteractive.bat文件到你的目标文件夹下，运行bat文件，按提示输入相应内容，这样可以使用git的checkout克隆仓库中的某一个文件夹，不必克隆整个仓库
+
 eg. 我想要克隆STM32modules仓库的OLED/OledMenu文件夹，可以按照下图方式输入
 ![输入图片说明](%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202025-03-24%20131102.png)
 
