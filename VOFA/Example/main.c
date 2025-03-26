@@ -126,12 +126,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   VOFA_SendFireWater("ready\n");
   float t = 0;
-  float aaa = 0;
-  VOFA_RegisterCtrledData("t", &t);
-  VOFA_RegisterCtrledData("aaa", &aaa);
+  int aaa = 0;
+  VOFA_RegisterData_float("t", &t);
+  VOFA_RegisterData_int("aaa", &aaa);
   while (1)
   {
-    VOFA_SendJustFloat(5, sin(t), cos(t), tan(t), t, aaa);
+    VOFA_SendJustFloat(5, sin(t), cos(t), tan(t), t, (float)aaa);
     t += 0.1;
     HAL_Delay(10);
     /* USER CODE END WHILE */
