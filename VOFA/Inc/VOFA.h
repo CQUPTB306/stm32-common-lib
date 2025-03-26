@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "Uart_DMA.h"
+#include "Uart_DMA.h"  // 如果使用双循环DMA则需要包含
 
 #define VOFA_UART           &huart1
  
@@ -28,7 +28,8 @@
 
 typedef struct
 {
-    float *controlData; 
+    float *controlData_float; 
+    int *controlData_int;
     const char *dataName;
 } VOFACtrlTypedef;
 
@@ -37,7 +38,9 @@ typedef struct
 void VOFA_Init();
 void VOFA_SendJustFloat(int length, ...);
 void VOFA_SendFireWater(const char *format, ...);
-void VOFA_RegisterSliderData(const char *name, float *data);
+void VOFA_RegisterData_float(const char *name, float *data);
+void VOFA_RegisterData_int(const char *name, int *data);
+
 
 
 // 内部函数
