@@ -7,7 +7,7 @@
 #endif
 
 uint8_t rxBuffer_VOFA[128] = {0};          // VOFA数据接收缓冲区
-#define DATA_LIST_SIZE 36                  // 可控数据列表最大容量
+#define DATA_LIST_SIZE 64                  // 可控数据列表最大容量
 VOFACtrlTypedef ctrledDataList[DATA_LIST_SIZE] = {0}; // 可被VOFA控制的数据列表
 
 
@@ -67,7 +67,9 @@ void ClearCtrlDataList()
     for (int i = 0; i < DATA_LIST_SIZE; i++) 
     {
         ctrledDataList[i].dataName = NULL;
-        ctrledDataList[i].controlData = NULL;
+        ctrledDataList[i].controlData_float = NULL;
+        ctrledDataList[i].controlData_int = NULL;
+
     }
 }
 
@@ -117,33 +119,67 @@ void VOFA_SendFireWater(const char *format, ...)
     VOFA_UART_SEND(UART_TO_VOFA, (uint8_t *)txBuffer, strlen(txBuffer));
 }
 
+
 /**
-  * @brief  注册可被VOFA滑动条控件控制的变量
-  * @param  name 变量名称（用于VOFA指令识别）
-  * @param  data 指向被控制变量的指针
-  * @note   将变量指针与名称绑定，存入控制列表
-  *         重复注册同一变量指针会被忽略
-  */
-void VOFA_RegisterSliderData(const char *name, float *data)
+ * @brief 注册一个浮点变量，以便通过 VOFA 进行控制。
+ * 
+ * 该函数会将一个浮点变量添加到控制列表中，如果变量已注册，则不会重复添加。
+ * 注册后的变量可以通过外部数据修改其值。
+ * 
+ * @param name 变量的名称。
+ * @param data 指向要注册的浮点变量的指针。
+ */
+void VOFA_RegisterData_float(const char *name, float *data)
 {
     // 检查是否已注册
     for (int i = 0; i < DATA_LIST_SIZE; i++)
     {
-        if (ctrledDataList[i].controlData == data)
+        if (ctrledDataList[i].controlData_float == data)
             return;
     }
     
     // 在空闲位置注册新变量
     for (int i = 0; i < DATA_LIST_SIZE; i++)
     {
-        if (ctrledDataList[i].controlData == NULL)
+        if (ctrledDataList[i].controlData_float == NULL && ctrledDataList[i].controlData_int == NULL)
         {
-            ctrledDataList[i].controlData = data;
+            ctrledDataList[i].controlData_float = data;
             ctrledDataList[i].dataName = name;
             break;
         }
     }
 }
+
+/**
+ * @brief 注册一个整数变量，以便通过 VOFA 进行控制。
+ * 
+ * 该函数会将一个整数变量添加到控制列表中，如果变量已注册，则不会重复添加。
+ * 注册后的变量可以通过外部数据修改其值。
+ * 
+ * @param name 变量的名称。
+ * @param data 指向要注册的整数变量的指针。
+ */
+void VOFA_RegisterData_int(const char *name, int *data)
+{
+    // 检查是否已注册
+    for (int i = 0; i < DATA_LIST_SIZE; i++)
+    {
+        if (ctrledDataList[i].controlData_int == data)
+            return;
+    }
+    
+    // 在空闲位置注册新变量
+    for (int i = 0; i < DATA_LIST_SIZE; i++)
+    {
+        if (ctrledDataList[i].controlData_int == NULL && ctrledDataList[i].controlData_float == NULL)
+        {
+            ctrledDataList[i].controlData_int = data;
+            ctrledDataList[i].dataName = name;
+            break;
+        }
+    }
+}
+
 
 /**
   * @brief  VOFA数据接收回调
@@ -155,15 +191,18 @@ void VOFA_RxCallBack()
     // 遍历控制列表匹配指令
     for (int i = 0; i < DATA_LIST_SIZE; i++)
     {
-        if (ctrledDataList[i].dataName == NULL || ctrledDataList[i].controlData == NULL)
+        if (ctrledDataList[i].dataName == NULL || (ctrledDataList[i].controlData_float == NULL && ctrledDataList[i].controlData_int == NULL))
             continue;  
         
         int nameLength = strlen(ctrledDataList[i].dataName);
         if (strncmp((char *)rxBuffer_VOFA, ctrledDataList[i].dataName, nameLength) == 0 && 
             rxBuffer_VOFA[nameLength] == ':')
         {
-            // 解析数值并写入目标变量
-            sscanf((char *)rxBuffer_VOFA + nameLength + 1, "%f", ctrledDataList[i].controlData);
+            if (ctrledDataList[i].controlData_int != NULL && ctrledDataList[i].controlData_float == NULL)
+                sscanf((char *)rxBuffer_VOFA + nameLength + 1, "%d", ctrledDataList[i].controlData_int);
+
+            else if (ctrledDataList[i].controlData_float != NULL)
+                sscanf((char *)rxBuffer_VOFA + nameLength + 1, "%f", ctrledDataList[i].controlData_float);
         }
     }
     
